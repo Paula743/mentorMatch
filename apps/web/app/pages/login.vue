@@ -9,7 +9,7 @@ async function submit() {
     await auth.login(form.email, form.password);
     await navigateTo("/admin/alumnos");
   } catch (e: any) {
-    error.value = e?.data?.message ?? "Credenciales incorrectas";
+      error.value = e?.data?.error?.message ?? e?.message ?? "No se pudo iniciar sesión";
   }
 }
 </script>

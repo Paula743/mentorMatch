@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { pool } from './db/pool';
 import { authRouter } from './routes/auth.routes';
+import  usersRoutes  from "./routes/users.routes";
 import { errorHandler, notFound } from './middleware/errors';
 
 export const app = express();
@@ -23,6 +24,7 @@ app.get('/api/health/db', async (_req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+app.use("/api/users", usersRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
