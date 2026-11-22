@@ -4,6 +4,8 @@ import { pool } from './db/pool';
 import { authRouter } from './routes/auth.routes';
 import { usersRouter } from './routes/users.routes';
 import { errorHandler, notFound } from './middleware/errors';
+import adminRoutes from "./routes/admin.routes";
+
 
 export const app = express();
 
@@ -25,6 +27,7 @@ app.get('/api/health/db', async (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

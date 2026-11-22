@@ -22,11 +22,12 @@ async function submit() {
 
   try {
     await auth.login(form.email, form.password);
-    await navigateTo("/");
+    await navigateTo(homeFor(auth.user?.role));
   } catch (e: any) {
     error.value =getErrorMessage(e,"Credenciales inválidas. No se logro iniciar sesión.");
   } finally{
     loading.value = false;
+
   }
 }
 
