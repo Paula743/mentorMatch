@@ -7,9 +7,9 @@ async function submit() {
   error.value = "";
   try {
     await auth.login(form.email, form.password);
-    await navigateTo("/");
+    await navigateTo(homeFor(auth.user?.role));
   } catch (e: any) {
-    error.value = e?.data?.error?.message ?? e?.message ?? "Credenciales inválidas";
+    error.value = apiError(e);
   }
 }
 </script>
