@@ -26,7 +26,6 @@ function getErrorMessage(e: any, fallback: string): string {
   return err?.message ?? fallback;
 }
 
-
 async function submit() {
   error.value = validate();
   if (error.value) return;
@@ -34,10 +33,9 @@ async function submit() {
   loading.value = true;
   try {
     await auth.register(form);
-    console.log("registro ok");
-    await navigateTo("/login");
+    const type = form.role === "ADVISOR" ? "advisor" : "student";
+    await navigateTo(`/login?registered=${type}`);
   } catch (e: any) {
-      console.log("Error completo:", e, "| status:", e?.statusCode, "| data:", e?.data);
       error.value = getErrorMessage(e, "No se puede crear la cuenta");
   } finally {
     loading.value = false;
@@ -59,12 +57,16 @@ async function submit() {
         <p class="mt-1 text-sm text-muted">Registra una cuenta para gestionar tus asesorías.</p>
 
         <form class="mt-6 space-y-4" @submit.prevent="submit">
-          <BaseInput v-model="form.fullName" placeholder="Nombre completo" type="text" required/>
-          <BaseInput v-model="form.email" placeholder="user@ugto.mx" type="email" required />
+          <BaseInput v-model="form.fullName" label="Nombre Completo" placeholder="Juan Panal" type="text" required/>
+          <BaseInput v-model="form.email" label="Correo Institucional" placeholder="user@ugto.mx" type="email" required />
           <div field-group>
-            <BaseInput v-model="form.password" placeholder="Contraseña" type="password" required />
+            <BaseInput v-model="form.password" label="Contraseña" placeholder="••••••••" type="password" required />
             <p class="mt-1 text-sm text-muted"> Mínimo 8 caracteres,con una letra y un número.</p>
           </div>
+          <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">
+            Elige tu rol
+          </label>
           <div class=" grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1 ">
             <button 
               type="button"
@@ -82,6 +84,7 @@ async function submit() {
             >
                Tutor
             </button>
+          </div>
           </div>
           <p v-if="error" class="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
             {{ error }}

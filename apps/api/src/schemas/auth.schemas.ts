@@ -26,7 +26,11 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email,
-  password: z.string().min(1, 'Contraseña requerida').max(128),
+  password: z
+    .string()
+    .min(1, 'Contraseña requerida')
+    .max(128)
+    ,
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
