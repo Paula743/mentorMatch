@@ -15,6 +15,7 @@ interface UserRow {
   full_name: string;
   email: string;
   role: Role;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   created_at: Date;
 }
 
@@ -25,17 +26,23 @@ function isUniqueViolation(error: unknown): boolean {
 // POST /api/auth/register
 authRouter.post('/register', validate(registerSchema), async (req, res) => {
   const { full_name, email, password, role } = req.body as RegisterInput;
-
+  const status = role === 'ADVISOR' ? 'PENDING' : 'APPROVED';
   const passwordHash = await bcrypt.hash(password, env.BCRYPT_ROUNDS);
 
   try {
     const { rows } = await pool.query<UserRow>(
-      `INSERT INTO users (full_name, email, password, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, full_name, email, role, created_at`,
-      [full_name, email, passwordHash, role],
+      `INSERT INTO users (full_name, email, password, role, status)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, full_name, email, role, status, created_at`,
+      [full_name, email, passwordHash, role, status],
     );
     const user = rows[0];
+
+    if (user.status === 'PENDING') {
+     res.status(201).json({ data: { user } });
+     return;
+    }
+
     res.status(201).json({ data: { user, token: signToken(user) } });
   } catch (error) {
     if (isUniqueViolation(error)) throw new HttpError(409, 'El correo ya está registrado');
@@ -48,7 +55,7 @@ authRouter.post('/login', validate(loginSchema), async (req, res) => {
   const { email, password } = req.body as LoginInput;
 
   const { rows } = await pool.query<UserRow & { password: string }>(
-    'SELECT id, full_name, email, role, created_at, password FROM users WHERE email = $1',
+    'SELECT id, full_name, email, role, status, created_at, password FROM users WHERE email = $1',
     [email],
   );
   const found = rows[0];
@@ -58,6 +65,13 @@ authRouter.post('/login', validate(loginSchema), async (req, res) => {
     throw new HttpError(401, 'Credenciales inválidas');
   }
 
+  if (found.status === 'PENDING') {
+    throw new HttpError(403, 'Tu cuenta está pendiente de aprobación por un administrador');
+  }
+  if (found.status === 'REJECTED') {
+    throw new HttpError(403, 'Tu cuenta fue rechazada. Contacta a un administrador');
+  }
+
   const { password: _hash, ...user } = found;
   res.json({ data: { user, token: signToken(user) } });
 });
@@ -65,7 +79,7 @@ authRouter.post('/login', validate(loginSchema), async (req, res) => {
 // GET /api/auth/me  (ruta protegida: requiere token)
 authRouter.get('/me', authenticate, async (req, res) => {
   const { rows } = await pool.query<UserRow>(
-    'SELECT id, full_name, email, role, created_at FROM users WHERE id = $1',
+    'SELECT id, full_name, email, role, status, created_at FROM users WHERE id = $1',
     [req.user!.id],
   );
   if (!rows[0]) throw new HttpError(401, 'Usuario no encontrado');

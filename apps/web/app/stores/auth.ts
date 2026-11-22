@@ -1,9 +1,6 @@
 export const useAuthStore = defineStore("auth", () => {
   const config = useRuntimeConfig();
-  const token = ref<string | null>(null);
-  const user = ref<any>(null);
-  const isLoggedIn = computed(() => !!token.value);
-
+ 
   const token = useCookie<string | null>("token", {
     default: () => null,
     maxAge: 60 * 60 * 24 * 7,
@@ -32,7 +29,7 @@ export const useAuthStore = defineStore("auth", () => {
     user.value = res.user ?? res.data?.user ?? null;
   }
 
-  async function register(payload: { fullName: string; email: string; password: string }) {
+  async function register(payload: { fullName: string; email: string; password: string, role: "STUDENT" | "ADVISOR" }) {
     await $fetch("/api/auth/register", {
       baseURL: config.public.apiBase,
       method: "POST",
@@ -40,6 +37,7 @@ export const useAuthStore = defineStore("auth", () => {
         full_name: payload.fullName,
         email: payload.email,
         password: payload.password,
+        role: payload.role
       },
     });
   }
