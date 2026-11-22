@@ -1,5 +1,8 @@
 export const useAuthStore = defineStore("auth", () => {
   const config = useRuntimeConfig();
+  const token = ref<string | null>(null);
+  const user = ref<any>(null);
+  const isLoggedIn = computed(() => !!token.value);
 
   const token = useCookie<string | null>("token", {
     default: () => null,
@@ -12,7 +15,8 @@ export const useAuthStore = defineStore("auth", () => {
   const isLoggedIn = computed(() => !!token.value);
 
   async function login(email: string, password: string) {
-    const res = await $fetch<any>("/api/auth/login", {
+    const api = useApi();
+    const res = await api<{ token: string; user: any }>("/api/auth/login", {
       baseURL: config.public.apiBase,
       method: "POST",
       body: { email, password },
