@@ -6,21 +6,23 @@ const email = z
   .toLowerCase()
   .pipe(z.email('Correo inválido').max(180, 'Máximo 180 caracteres'));
 
+export const fullNameField = z
+  .string()
+  .trim()
+  .min(2, 'Mínimo 2 caracteres')
+  .max(120, 'Máximo 120 caracteres');
+
+export const passwordField = z
+  .string()
+  .min(8, 'Mínimo 8 caracteres')
+  .regex(/[A-Za-z]/, 'Debe incluir al menos una letra')
+  .regex(/\d/, 'Debe incluir al menos un número')
+  .refine((v) => Buffer.byteLength(v, 'utf8') <= 72, 'Máximo 72 bytes');
+
 export const registerSchema = z.object({
-  full_name: z
-    .string()
-    .trim()
-    .min(2, 'Mínimo 2 caracteres')
-    .max(120, 'Máximo 120 caracteres'),
+  full_name: fullNameField,
   email,
-  password: z
-    .string()
-    .min(8, 'Mínimo 8 caracteres')
-    .regex(/[A-Za-z]/, 'Debe incluir al menos una letra')
-    .regex(/\d/, 'Debe incluir al menos un número')
-    .refine((v) => Buffer.byteLength(v, 'utf8') <= 72, 'Máximo 72 bytes'),
-  // Desde el registro público solo se puede ser estudiante o asesor.
-  // Admin no se acepta, se asigna directamente en la base de datos.
+  passwordField: passwordField,
   role: z.enum(['STUDENT', 'ADVISOR']).default('STUDENT'),
 });
 

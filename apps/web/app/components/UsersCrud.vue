@@ -33,7 +33,7 @@ async function save() {
   saving.value = true;
   try {
     if (editing.value) {
-      const body: Record<string, string> = { fullName: form.fullName, email: form.email };
+      const body: Record<string, string> = { full_name: form.fullName, email: form.email };
       if (form.password) body.password = form.password;
       await api(`/api/admin/users/${editing.value.id}`, { method: "PATCH", body });
     } else {

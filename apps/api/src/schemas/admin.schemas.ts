@@ -1,21 +1,22 @@
 import { z } from "zod";
+import { email, fullNameField, passwordField } from "./auth.schemas";
 
 const role = z.enum(["STUDENT", "ADVISOR"]);
-const id = z.coerce.number().int().positive();
+const id = z.coerce.number().int("Id inválido").positive("Id inválido");
 const nonEmpty = (o: object) => Object.keys(o).length > 0;
 
 export const createUserSchema = z.object({
-  fullName: z.string().trim().min(2).max(120),
-  email: z.string().trim().email().max(180),
-  password: z.string().min(8).max(100),
+  full_name: fullNameField,
+  email,
+  password: passwordField,
   role,
 });
 
 export const updateUserSchema = z
   .object({
-    fullName: z.string().trim().min(2).max(120),
-    email: z.string().trim().email().max(180),
-    password: z.string().min(8).max(100),
+    full_name: fullNameField,
+    email,
+    password: passwordField,
   })
   .partial()
   .refine(nonEmpty, "No hay nada que actualizar");

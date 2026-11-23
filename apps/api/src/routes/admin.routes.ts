@@ -42,13 +42,13 @@ router.get("/users", async (req, res) => {
 });
 
 router.post("/users", validate(createUserSchema), async (req, res) => {
-  const { fullName, email, password, role } = req.body;
+  const { full_name, email, password, role } = req.body;
   const hash = await bcrypt.hash(password, 10);
   try {
     const { rows } = await pool.query(
       `INSERT INTO users (full_name, email, password, role)
        VALUES ($1, $2, $3, $4) RETURNING ${USER_COLS}`,
-      [fullName, email, hash, role]);
+      [full_name, email, hash, role]);
     res.status(201).json(rows[0]);
   } catch (e: any) {
     if (e.code === "23505") throw new HttpError(409, "Ese correo ya está registrado");
@@ -58,7 +58,7 @@ router.post("/users", validate(createUserSchema), async (req, res) => {
 
 router.patch("/users/:id", validate(updateUserSchema), async (req, res) => {
   const id = toId(req.params.id);
-  const { fullName, email, password } = req.body;
+  const { full_name, email, password } = req.body;
   const hash = password ? await bcrypt.hash(password, 10) : null;
   try {
     const { rows } = await pool.query(
@@ -68,7 +68,7 @@ router.patch("/users/:id", validate(updateUserSchema), async (req, res) => {
          password  = COALESCE($4, password)
        WHERE id = $1 AND role IN ('STUDENT', 'ADVISOR')
        RETURNING ${USER_COLS}`,
-      [id, fullName ?? null, email ?? null, hash]);
+      [id, full_name ?? null, email ?? null, hash]);
     if (rows.length === 0) throw new HttpError(404, "Usuario no encontrado");
     res.json(rows[0]);
   } catch (e: any) {
