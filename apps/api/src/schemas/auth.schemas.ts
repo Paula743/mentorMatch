@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const email = z
+export const email = z
   .string()
   .trim()
   .toLowerCase()
@@ -22,7 +22,7 @@ export const passwordField = z
 export const registerSchema = z.object({
   full_name: fullNameField,
   email,
-  passwordField: passwordField,
+  password: passwordField,
   role: z.enum(['STUDENT', 'ADVISOR']).default('STUDENT'),
 });
 

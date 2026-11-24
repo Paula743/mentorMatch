@@ -8,6 +8,7 @@ const form = reactive({
 });
 const error = ref("");
 const loading = ref(false);
+const waitingApproval = ref(false);
 
 function validate(): string {
   if (form.fullName.trim().length < 2) return "El nombre debe tener al menos 2 caracteres";
@@ -33,8 +34,12 @@ async function submit() {
   loading.value = true;
   try {
     await auth.register(form);
-    const type = form.role === "ADVISOR" ? "advisor" : "student";
-    await navigateTo(`/login?registered=${type}`);
+    if (form.role === "ADVISOR") {
+      // Los tutores esperan a que un administrador apruebe su solicitud
+      waitingApproval.value = true;
+      return;
+    }
+    await navigateTo("/login?registered=student");
   } catch (e: any) {
       error.value = getErrorMessage(e, "No se puede crear la cuenta");
   } finally {
@@ -53,6 +58,20 @@ async function submit() {
     <!-- Formulario -->
     <main class="flex items-center justify-center p-6">
       <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <div v-if="waitingApproval" class="text-center" role="status">
+          <div class="mx-auto mb-4 grid size-14 place-items-center rounded-full bg-amber-100 text-2xl" aria-hidden="true">⏳</div>
+          <h1 class="text-2xl font-bold">Solicitud enviada</h1>
+          <p class="mt-3 text-sm text-slate-700">
+            Tu cuenta de tutor quedó <b>pendiente de aprobación</b>. Un administrador la revisará y,
+            mientras tanto, <b>no podrás iniciar sesión</b>. Vuelve a intentarlo más tarde con el correo
+            <b>{{ form.email }}</b>.
+          </p>
+          <NuxtLink to="/login" class="mt-6 block rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white hover:bg-brand-700">
+            Ir a iniciar sesión
+          </NuxtLink>
+        </div>
+
+        <template v-else>
         <h1 class="text-2xl font-bold">Comienza tu viaje en MentorMatch</h1>
         <p class="mt-1 text-sm text-muted">Registra una cuenta para gestionar tus asesorías.</p>
 
@@ -96,6 +115,7 @@ async function submit() {
           ¿Ya tienes cuenta?
           <NuxtLink to="/login" class="font-semibold text-brand-600">Iniciar Sesión</NuxtLink>
         </p>
+        </template>
       </div>
     </main>
   </div>
