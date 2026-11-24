@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type User = { id: number; full_name: string; email: string; role: string; created_at: string };
+type User = { id: number; full_name: string; email: string; role: string; status: "PENDING" | "APPROVED" | "REJECTED"; created_at: string };
 
 const props = defineProps<{ role: "STUDENT" | "ADVISOR"; title: string; singular: string }>();
 const api = useApi();
@@ -48,8 +48,15 @@ async function save() {
   }
 }
 
+const statusLabel = { PENDING: "Pendiente", APPROVED: "Aprobado", REJECTED: "Rechazado" } as const;
+const statusClass = {
+  PENDING: "bg-amber-100 text-amber-800",
+  APPROVED: "bg-green-100 text-green-800",
+  REJECTED: "bg-gray-200 text-gray-700",
+} as const;
+
 async function remove(u: User) {
-  if (!confirm(`¿Eliminar a ${u.full_name}? Se borrarán también sus tutorías.`)) return;
+  if (!confirm(`¿Eliminar a ${u.full_name}? Se borrarán también sus asesorías.`)) return;
   try {
     await api(`/api/admin/users/${u.id}`, { method: "DELETE" });
     await refresh();
@@ -74,6 +81,7 @@ async function remove(u: User) {
         <tr>
           <th class="p-3">Nombre</th>
           <th class="p-3">Correo</th>
+          <th v-if="role === 'ADVISOR'" class="p-3">Estado</th>
           <th class="p-3">Registro</th>
           <th class="p-3 text-right">Acciones</th>
         </tr>
@@ -82,6 +90,11 @@ async function remove(u: User) {
         <tr v-for="u in users" :key="u.id" class="border-t">
           <td class="p-3">{{ u.full_name }}</td>
           <td class="p-3">{{ u.email }}</td>
+          <td v-if="role === 'ADVISOR'" class="p-3">
+            <span class="rounded px-2 py-1 text-xs font-semibold" :class="statusClass[u.status]">
+              {{ statusLabel[u.status] }}
+            </span>
+          </td>
           <td class="p-3">{{ new Date(u.created_at).toLocaleDateString("es-MX") }}</td>
           <td class="space-x-2 p-3 text-right">
             <button class="text-blue-700 hover:underline" @click="openEdit(u)">Editar</button>
@@ -89,7 +102,7 @@ async function remove(u: User) {
           </td>
         </tr>
         <tr v-if="!users?.length">
-          <td colspan="4" class="p-6 text-center text-gray-500">No hay registros todavía.</td>
+          <td :colspan="role === 'ADVISOR' ? 5 : 4" class="p-6 text-center text-gray-500">No hay registros todavía.</td>
         </tr>
       </tbody>
     </table>

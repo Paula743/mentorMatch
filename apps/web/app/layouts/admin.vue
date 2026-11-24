@@ -3,7 +3,8 @@ const links = [
   { to: "/admin", label: "Resumen" },
   { to: "/admin/alumnos", label: "Alumnos" },
   { to: "/admin/profesores", label: "Profesores" },
-  { to: "/admin/tutorias", label: "Tutorías" },
+  { to: "/admin/solicitudes", label: "Solicitudes de tutores" },
+  { to: "/admin/tutorias", label: "Asesorías" },
 ];
 </script>
 

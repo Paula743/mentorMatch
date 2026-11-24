@@ -5,7 +5,9 @@ import { authRouter } from './routes/auth.routes';
 import { usersRouter } from './routes/users.routes';
 import { errorHandler, notFound } from './middleware/errors';
 import adminRoutes from "./routes/admin.routes";
-
+import { tutorMeRouter } from './routes/tutorMe.routes';
+import { tutorsRouter, subjectsRouter } from './routes/tutors.routes';
+import { bookingsRouter } from './routes/bookings.routes';
 
 export const app = express();
 
@@ -28,6 +30,10 @@ app.get('/api/health/db', async (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use("/api/admin", adminRoutes);
+app.use('/api/tutors/me', tutorMeRouter);
+app.use('/api/tutors', tutorsRouter);
+app.use('/api/subjects', subjectsRouter);
+app.use('/api/bookings', bookingsRouter);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -1,5 +1,9 @@
 <script setup lang="ts">
-defineProps<{ links: { to: string; label: string }[] }>();
+defineProps<{
+  links: { to: string; label: string }[];
+  // Opción "Editar perfil" entre el nombre y "Cerrar sesión" (solo la usa el panel del tutor)
+  profile?: { to: string; label: string; enabled: boolean; hint?: string };
+}>();
 const auth = useAuthStore();
 
 const initials = computed(() =>
@@ -51,6 +55,23 @@ const initials = computed(() =>
         </span>
         <p class="truncate text-sm font-semibold">{{ auth.user?.full_name }}</p>
       </div>
+
+      <!-- Editar perfil: va DESPUÉS del recuadro con el nombre y ANTES de "Cerrar sesión" -->
+      <template v-if="profile">
+        <NuxtLink
+          v-if="profile.enabled" :to="profile.to"
+          class="block w-full rounded-xl bg-white/10 px-4 py-2.5 text-left text-sm font-medium transition hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/20"
+          exact-active-class="!bg-white/20 ring-1 ring-white/30"
+        >{{ profile.label }}</NuxtLink>
+        <div v-else :title="profile.hint">
+          <span
+            class="block w-full cursor-not-allowed rounded-xl bg-white/5 px-4 py-2.5 text-left text-sm font-medium text-white/50"
+            aria-disabled="true"
+          >{{ profile.label }}</span>
+          <p v-if="profile.hint" class="mt-1 px-1 text-[11px] leading-snug text-brand-100">{{ profile.hint }}</p>
+        </div>
+      </template>
+
       <button
         class="w-full rounded-xl bg-white/10 px-4 py-2.5 text-left text-sm font-medium transition hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/20"
         @click="auth.logout()"
