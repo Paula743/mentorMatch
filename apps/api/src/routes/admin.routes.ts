@@ -7,15 +7,16 @@ import { HttpError } from "../utils/httpError";
 import {
   createUserSchema, updateUserSchema, createBookingSchema, updateBookingSchema,
 } from "../schemas/admin.schemas";
+import { userStatusSchema } from "../schemas/advisor.schemas";
 
 const router = Router();
 router.use(authenticate, requireRole("ADMIN")); // todo lo de aquí es solo para administradores
 
-const toId = (v: string) => {
-  const n = Number(v);
+const toId = (v: string | string[]) => {
+  const n = Number(Array.isArray(v) ? v[0] : v);
   if (!Number.isInteger(n) || n <= 0) throw new HttpError(400, "Id inválido");
   return n;
-};
+}
 
 /* ---------- RESUMEN ---------- */
 router.get("/summary", async (_req, res) => {
@@ -23,6 +24,8 @@ router.get("/summary", async (_req, res) => {
     SELECT
       (SELECT count(*)::int FROM users WHERE role = 'STUDENT')  AS students,
       (SELECT count(*)::int FROM users WHERE role = 'ADVISOR')  AS professors,
+      (SELECT count(*)::int FROM users
+        WHERE role = 'ADVISOR' AND status = 'PENDING')          AS pending_advisors,
       (SELECT count(*)::int FROM bookings)                      AS bookings,
       (SELECT count(*)::int FROM bookings b
          JOIN availability a ON a.id = b.availability_id
@@ -32,12 +35,16 @@ router.get("/summary", async (_req, res) => {
 });
 
 /* ---------- ALUMNOS Y PROFESORES (users) ---------- */
-const USER_COLS = "id, full_name, email, role, created_at";
+const USER_COLS = "id, full_name, email, role, status, created_at";
 
 router.get("/users", async (req, res) => {
   const role = req.query.role === "ADVISOR" ? "ADVISOR" : "STUDENT";
+  const status = ["PENDING", "APPROVED", "REJECTED"].includes(String(req.query.status))
+    ? String(req.query.status) : null;
   const { rows } = await pool.query(
-    `SELECT ${USER_COLS} FROM users WHERE role = $1 ORDER BY created_at DESC`, [role]);
+    `SELECT ${USER_COLS} FROM users
+     WHERE role = $1 AND ($2::text IS NULL OR status = $2)
+     ORDER BY created_at DESC`, [role, status]);
   res.json(rows);
 });
 
@@ -77,6 +84,16 @@ router.patch("/users/:id", validate(updateUserSchema), async (req, res) => {
   }
 });
 
+// Aprobar o rechazar la cuenta de un tutor
+router.patch("/users/:id/status", validate(userStatusSchema), async (req, res) => {
+  const id = toId(req.params.id);
+  const { rows } = await pool.query(
+    `UPDATE users SET status = $2 WHERE id = $1 AND role = 'ADVISOR' RETURNING ${USER_COLS}`,
+    [id, req.body.status]);
+  if (rows.length === 0) throw new HttpError(404, "Tutor no encontrado");
+  res.json(rows[0]);
+});
+
 router.delete("/users/:id", async (req, res) => {
   const id = toId(req.params.id);
   const { rowCount } = await pool.query(
@@ -86,7 +103,6 @@ router.delete("/users/:id", async (req, res) => {
 });
 
 /* ---------- TUTORÍAS AGENDADAS (bookings) ---------- */
-// Si tu compañero usa otra forma de relacionar horario y tutor, ajusta estos JOIN
 const BOOKING_SELECT = `
   SELECT b.id, b.status, b.created_at,
          s.id AS student_id,   s.full_name AS student_name,
