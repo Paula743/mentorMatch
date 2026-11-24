@@ -27,6 +27,7 @@ services:
       DATABASE_URL: postgresql://mentormatch:mentormatch@db:5432/mentormatch
     volumes:
       - ./apps/api/src:/app/src #monta src dentro del contenedor
+      - ./apps/api/db:/app/db
     depends_on:
       db:
         condition: service_healthy
